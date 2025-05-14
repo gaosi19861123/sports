@@ -1,5 +1,5 @@
 from typing import Tuple
-import cv2
+import cv2  # pylint: disable=no-name-in-module
 import numpy as np
 import numpy.typing as npt
 
@@ -28,7 +28,7 @@ class ViewTransformer:
 
         source = source.astype(np.float32)
         target = target.astype(np.float32)
-        self.m, _ = cv2.findHomography(source, target)
+        self.m, _ = cv2.findHomography(source, target)  # pylint: disable=no-member
         if self.m is None:
             raise ValueError("Homography matrix could not be calculated.")
 
@@ -55,7 +55,7 @@ class ViewTransformer:
             raise ValueError("Points must be 2D coordinates.")
 
         reshaped_points = points.reshape(-1, 1, 2).astype(np.float32)
-        transformed_points = cv2.perspectiveTransform(reshaped_points, self.m)
+        transformed_points = cv2.perspectiveTransform(reshaped_points, self.m)  # pylint: disable=no-member
         return transformed_points.reshape(-1, 2).astype(np.float32)
 
     def transform_image(
@@ -78,4 +78,4 @@ class ViewTransformer:
         """
         if len(image.shape) not in {2, 3}:
             raise ValueError("Image must be either grayscale or color.")
-        return cv2.warpPerspective(image, self.m, resolution_wh)
+        return cv2.warpPerspective(image, self.m, resolution_wh)  # pylint: disable=no-member

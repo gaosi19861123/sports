@@ -1,12 +1,13 @@
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
-import cv2
+import cv2  # pylint: disable=no-name-in-module
 import supervision as sv
 import numpy as np
 
 from sports.configs.soccer import SoccerPitchConfiguration
 
 
+# pylint: disable=too-many-arguments,too-many-locals
 def draw_pitch(
     config: SoccerPitchConfiguration,
     background_color: sv.Color = sv.Color(34, 139, 34),
@@ -54,7 +55,7 @@ def draw_pitch(
                   int(config.vertices[start - 1][1] * scale) + padding)
         point2 = (int(config.vertices[end - 1][0] * scale) + padding,
                   int(config.vertices[end - 1][1] * scale) + padding)
-        cv2.line(
+        cv2.line(  # pylint: disable=no-member
             img=pitch_image,
             pt1=point1,
             pt2=point2,
@@ -66,7 +67,7 @@ def draw_pitch(
         scaled_length // 2 + padding,
         scaled_width // 2 + padding
     )
-    cv2.circle(
+    cv2.circle(  # pylint: disable=no-member
         img=pitch_image,
         center=centre_circle_center,
         radius=scaled_circle_radius,
@@ -85,7 +86,7 @@ def draw_pitch(
         )
     ]
     for spot in penalty_spots:
-        cv2.circle(
+        cv2.circle(  # pylint: disable=no-member
             img=pitch_image,
             center=spot,
             radius=point_radius,
@@ -96,6 +97,7 @@ def draw_pitch(
     return pitch_image
 
 
+# pylint: disable=too-many-arguments
 def draw_points_on_pitch(
     config: SoccerPitchConfiguration,
     xy: np.ndarray,
@@ -145,14 +147,14 @@ def draw_points_on_pitch(
             int(point[0] * scale) + padding,
             int(point[1] * scale) + padding
         )
-        cv2.circle(
+        cv2.circle(  # pylint: disable=no-member
             img=pitch,
             center=scaled_point,
             radius=radius,
             color=face_color.as_bgr(),
             thickness=-1
         )
-        cv2.circle(
+        cv2.circle(  # pylint: disable=no-member
             img=pitch,
             center=scaled_point,
             radius=radius,
@@ -163,6 +165,7 @@ def draw_points_on_pitch(
     return pitch
 
 
+# pylint: disable=too-many-arguments
 def draw_paths_on_pitch(
     config: SoccerPitchConfiguration,
     paths: List[np.ndarray],
@@ -214,7 +217,7 @@ def draw_paths_on_pitch(
             continue
 
         for i in range(len(scaled_path) - 1):
-            cv2.line(
+            cv2.line(  # pylint: disable=no-member
                 img=pitch,
                 pt1=scaled_path[i],
                 pt2=scaled_path[i + 1],
@@ -225,6 +228,7 @@ def draw_paths_on_pitch(
         return pitch
 
 
+# pylint: disable=too-many-arguments,too-many-locals
 def draw_pitch_voronoi_diagram(
     config: SoccerPitchConfiguration,
     team_1_xy: np.ndarray,
@@ -301,6 +305,8 @@ def draw_pitch_voronoi_diagram(
     voronoi[control_mask] = team_1_color_bgr
     voronoi[~control_mask] = team_2_color_bgr
 
-    overlay = cv2.addWeighted(voronoi, opacity, pitch, 1 - opacity, 0)
+    overlay = cv2.addWeighted(  # pylint: disable=no-member
+        voronoi, opacity, pitch, 1 - opacity, 0
+    )
 
     return overlay

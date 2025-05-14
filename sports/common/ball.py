@@ -1,6 +1,6 @@
 from collections import deque
 
-import cv2
+import cv2  # pylint: disable=no-name-in-module
 import numpy as np
 import supervision as sv
 
@@ -55,7 +55,7 @@ class BallAnnotator:
             color = self.color_palette.by_idx(i)
             interpolated_radius = self.interpolate_radius(i, len(self.buffer))
             for center in xy:
-                frame = cv2.circle(
+                frame = cv2.circle(  # pylint: disable=no-member
                     img=frame,
                     center=tuple(center),
                     radius=interpolated_radius,

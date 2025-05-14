@@ -2,8 +2,15 @@ from dataclasses import dataclass, field
 from typing import List, Tuple
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class SoccerPitchConfiguration:
+    """
+    Configuration class for a standard soccer pitch dimensions and layout.
+    
+    Contains all necessary dimensions and coordinates for drawing a soccer pitch,
+    including field markings, penalty areas, goal boxes and the center circle.
+    """
     width: int = 7000  # [cm]
     length: int = 12000  # [cm]
     penalty_box_width: int = 4100  # [cm]
