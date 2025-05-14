@@ -14,32 +14,35 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: 设置Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-          
-      - name: 安装依赖
-        run: |
-          python -m pip install --upgrade pip
-          pip install github-changelog-generator
-          
       - name: 生成Changelog
         run: |
           if [ ! -f CHANGELOG.md ]; then
             touch CHANGELOG.md
           fi
           
-          echo "## 更新内容 (PR #${{ github.event.pull_request.number }})" > temp_changelog.md
-          echo "- ${{ github.event.pull_request.title }}" >> temp_changelog.md
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_BODY="${{ github.event.pull_request.body }}"
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+          MERGE_DATE="$(date '+%Y-%m-%d')"
           
-          if [ ! -z "${{ github.event.pull_request.body }}" ]; then
-            echo "" >> temp_changelog.md
-            echo "${{ github.event.pull_request.body }}" | sed 's/^/  /' >> temp_changelog.md
+          # 创建临时changelog条目
+          echo -e "## [$PR_NUMBER] - $MERGE_DATE\n" > temp_changelog.md
+          echo -e "### $PR_TITLE\n" >> temp_changelog.md
+          
+          if [ ! -z "$PR_BODY" ]; then
+            echo -e "$PR_BODY" | sed 's/^/> /' >> temp_changelog.md
+            echo -e "\n" >> temp_changelog.md
           fi
           
-          echo "" >> temp_changelog.md
-          cat CHANGELOG.md >> temp_changelog.md
+          echo -e "作者: @$AUTHOR\n" >> temp_changelog.md
+          echo -e "---\n" >> temp_changelog.md
+          
+          # 合并到现有的changelog
+          if [ -s CHANGELOG.md ]; then
+            cat CHANGELOG.md >> temp_changelog.md
+          fi
+          
           mv temp_changelog.md CHANGELOG.md
           
       - name: 提交Changelog变更
