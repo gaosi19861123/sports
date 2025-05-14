@@ -1,0 +1,78 @@
+name: リリース処理
+
+on:
+  release:
+    types: [created, edited]
+  push:
+    tags:
+      - 'v*'  # 当推送v开头的标签时触发
+
+jobs:
+  update-release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリのチェックアウト
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: リリースタグとバージョンの取得
+        id: get_version
+        run: |
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          # タグからvを削除 (例: v1.0.0 -> 1.0.0)
+          VERSION="${RELEASE_TAG#v}"
+          echo "::set-output name=version::$VERSION"
+          echo "::set-output name=tag::$RELEASE_TAG"
+      
+      - name: CHANGELOGから変更履歴を抽出
+        id: get_changelog
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            echo "CHANGELOGファイルが見つかりません"
+            exit 1
+          fi
+          
+          # バージョン行を探す (例: ## [1.0.0] または ## v1.0.0)
+          VERSION="${{ steps.get_version.outputs.version }}"
+          TAG="${{ steps.get_version.outputs.tag }}"
+          
+          # 異なる形式のバージョン表記に対応
+          VERSION_PATTERNS=(
+            "## \\[$VERSION\\]"
+            "## \\[$TAG\\]"
+            "## $VERSION"
+            "## $TAG"
+          )
+          
+          CHANGELOG_CONTENT=""
+          for PATTERN in "${VERSION_PATTERNS[@]}"; do
+            # パターンに一致する行からファイル終わりまたは次のバージョンまでを抽出
+            CONTENT=$(awk "/^$PATTERN/,/^## /" CHANGELOG.md | head -n -1)
+            if [ ! -z "$CONTENT" ]; then
+              CHANGELOG_CONTENT="$CONTENT"
+              break
+            fi
+          done
+          
+          # 変更履歴が見つからない場合
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            echo "バージョン $VERSION または $TAG の変更履歴が見つかりませんでした"
+            # すべての変更履歴を表示する
+            CHANGELOG_CONTENT=$(cat CHANGELOG.md)
+          fi
+          
+          # 改行をGitHubのフォーマットに変換
+          CHANGELOG_CONTENT="${CHANGELOG_CONTENT//'%'/'%25'}"
+          CHANGELOG_CONTENT="${CHANGELOG_CONTENT//$'\n'/'%0A'}"
+          CHANGELOG_CONTENT="${CHANGELOG_CONTENT//$'\r'/'%0D'}"
+          
+          echo "::set-output name=content::$CHANGELOG_CONTENT"
+      
+      - name: リリースノートを更新
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          body: |
+            ${{ steps.get_changelog.outputs.content }}
+          token: ${{ secrets.GITHUB_TOKEN }} 
