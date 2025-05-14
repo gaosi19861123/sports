@@ -2,11 +2,21 @@ from typing import Generator, Iterable, List, TypeVar
 
 import numpy as np
 import supervision as sv
-import torch
-import umap
-from sklearn.cluster import KMeans
-from tqdm import tqdm
-from transformers import AutoProcessor, SiglipVisionModel
+# 使用条件导入torch
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    
+try:
+    import umap
+    from sklearn.cluster import KMeans
+    from tqdm import tqdm
+    from transformers import AutoProcessor, SiglipVisionModel
+    DEPENDENCIES_AVAILABLE = True
+except ImportError:
+    DEPENDENCIES_AVAILABLE = False
 
 V = TypeVar("V")
 
@@ -51,6 +61,12 @@ class TeamClassifier:
            device (str): The device to run the model on ('cpu' or 'cuda').
            batch_size (int): The batch size for processing images.
        """
+        if not TORCH_AVAILABLE or not DEPENDENCIES_AVAILABLE:
+            raise ImportError(
+                "TeamClassifier requires torch, transformers, umap-learn and scikit-learn. "
+                "Please install these packages to use this feature."
+            )
+            
         self.device = device
         self.batch_size = batch_size
         self.features_model = SiglipVisionModel.from_pretrained(
