@@ -19,7 +19,16 @@ jobs:
       - name: リリースタグとバージョンの取得
         id: get_version
         run: |
-          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          # github.event.release.tag_name用于release事件
+          # github.ref用于push tags事件
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            RELEASE_TAG="${{ github.event.release.tag_name }}"
+          else
+            RELEASE_TAG="${{ github.ref }}"
+            # 从refs/tags/v1.0.0格式中提取标签名
+            RELEASE_TAG="${RELEASE_TAG#refs/tags/}"
+          fi
+          
           # タグからvを削除 (例: v1.0.0 -> 1.0.0)
           VERSION="${RELEASE_TAG#v}"
           echo "::set-output name=version::$VERSION"
@@ -33,34 +42,8 @@ jobs:
             exit 1
           fi
           
-          # バージョン行を探す (例: ## [1.0.0] または ## v1.0.0)
-          VERSION="${{ steps.get_version.outputs.version }}"
-          TAG="${{ steps.get_version.outputs.tag }}"
-          
-          # 異なる形式のバージョン表記に対応
-          VERSION_PATTERNS=(
-            "## \\[$VERSION\\]"
-            "## \\[$TAG\\]"
-            "## $VERSION"
-            "## $TAG"
-          )
-          
-          CHANGELOG_CONTENT=""
-          for PATTERN in "${VERSION_PATTERNS[@]}"; do
-            # パターンに一致する行からファイル終わりまたは次のバージョンまでを抽出
-            CONTENT=$(awk "/^$PATTERN/,/^## /" CHANGELOG.md | head -n -1)
-            if [ ! -z "$CONTENT" ]; then
-              CHANGELOG_CONTENT="$CONTENT"
-              break
-            fi
-          done
-          
-          # 変更履歴が見つからない場合
-          if [ -z "$CHANGELOG_CONTENT" ]; then
-            echo "バージョン $VERSION または $TAG の変更履歴が見つかりませんでした"
-            # すべての変更履歴を表示する
-            CHANGELOG_CONTENT=$(cat CHANGELOG.md)
-          fi
+          # 读取整个CHANGELOG.md文件内容
+          CHANGELOG_CONTENT=$(cat CHANGELOG.md)
           
           # 改行をGitHubのフォーマットに変換
           CHANGELOG_CONTENT="${CHANGELOG_CONTENT//'%'/'%25'}"
