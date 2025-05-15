@@ -1,3 +1,11 @@
+## [6] - 2025-05-15
+
+### add chinese comment
+
+作者: @gaosi19861123
+
+---
+
 ## [5] - 2025-05-14
 
 ### fix release.yml
